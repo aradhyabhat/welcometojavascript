@@ -2,10 +2,14 @@ import React, { Component } from "react";
 import axios from "axios";
 import { Redirect } from 'react-router-dom';
 import {backendUrlUser} from '../BackendURL';
-import { ProgressSpinner } from 'primereact/progressspinner';
 // import { InputText } from 'primereact/inputtext';
 // import { Button } from 'primereact/button';
-
+// import { Link } from '@material-ui/core'
+import Button from '@material-ui/core/Button';
+import CssBaseline from '@material-ui/core/CssBaseline';
+import TextField from '@material-ui/core/TextField';
+import Typography from '@material-ui/core/Typography';
+import Container from '@material-ui/core/Container';
 class Login extends Component {
     constructor(props) {
         super(props);
@@ -27,8 +31,7 @@ class Login extends Component {
             errorMessage: "",
             loadHome: false,
             loadRegister: false,
-            userId: "",
-            show:true
+            userId: ""
         }
     }
 
@@ -47,12 +50,9 @@ class Login extends Component {
         this.validateField(name, value);
         // console.log(this.state.loginform[name], name);
     }
-    componentWillMount() {
-        window.scrollTo(0, 0)
-    }
+
     login = () => {
         const { loginform } = this.state;
-        // console.log(this.state.loginform)
         axios.post(backendUrlUser+'/login', loginform)
             .then(response => {
                 console.log(response);
@@ -60,14 +60,19 @@ class Login extends Component {
                 sessionStorage.setItem("contactNo", response.data.contactNo);
                 sessionStorage.setItem("userId", userId);
                 sessionStorage.setItem("userName", response.data.name);;
-                this.setState({ loadHome: true, userId: userId,errorMessage:"" ,show:false})
+                this.setState({ loadHome: true, userId: userId })
+                
                 window.location.reload();
-             
 
-            }).catch((error) => {
-         
-               this.setState({errorMessage:error.response.data.message})
-            //  this.errorMessage = error.message;
+            }).catch(error => {
+                console.log(error.message);
+                let errorstatus = error.message.substr(-3,);
+                if(Number(errorstatus) === 406){
+                    this.setState({errorMessage: "Enter correct password"})
+                }else if(Number(errorstatus) === 404){
+                    this.setState({errorMessage: "Enter registered contact number"})
+                }
+                
                 sessionStorage.clear();
             })
         // console.log(this.state.loginform.contactNo, this.state.loginform.password);
@@ -99,11 +104,10 @@ class Login extends Component {
                 if (!value || value === "") {
                     fieldValidationErrors.password = "Password is manadatory";
                     formValid.password = false;
-                    } else if (!((value.match(/[a-z]/) && value.match(/[0-9]/) && value.match(/\W/) && value.match(/[A-Z]/)))) {
+                    } else if (!(value.match(/[a-z]/) && value.match(/[A-Z]/) && value.match(/[0-9]/) && value.match(/[!@#$%^&*]/))) {
                         fieldValidationErrors.password = "Please Enter a valid password"
                         formValid.password = false;
                 } else {
-                  
                     fieldValidationErrors.password = "";
                     formValid.password = true;
                 }
@@ -115,101 +119,93 @@ class Login extends Component {
         this.setState({
             loginformErrorMessage: fieldValidationErrors,
             loginformValid: formValid,
-            successMessage: ""
         });
     }
 
     render() {
-        if (this.state.loadHome === true) return <Redirect to={'/home/' + this.state.userId} />
-        else if (this.state.loadRegister === true) return <Redirect to={'/register'} />
-        else{
+        
+        if (this.state.loadHome) {return <Redirect to={'/home/' + this.state.userId} />}
+        if (this.state.loadRegister === true) {return <Redirect to={'/register'} />}
+        if(!sessionStorage.getItem("userId")){
         return (
-            <div>
-                  {/* {
-                this.state.show ?
-                    <div id="details" className="details-section">
+            <Container component="main" maxWidth="xs">
+        <CssBaseline />
+        <br/>
+        
+        <div className="card shadow-lg"  >
+                        <div className="card-body">
+          <div >
+              <br/><br/>
+              <Typography component="h1" variant="h3">Login</Typography>
+              <br/>
+              
+                        <form  onSubmit={this.handleSubmit}>
+                            <TextField
+                                variant="outlined"
+                                margin="normal"
+                                required
+                                fullWidth
+                                id="contactNo"
+                                label="Contact Number"
+                                name="contactNo"
+                                autoFocus
+                                onChange={this.handleChange}
+                            /><br/>
+                            {this.state.loginformErrorMessage.contactNo ? 
+							(<span className="text-danger">
+							 {this.state.loginformErrorMessage.contactNo}</span>): null}
+                            <TextField
+                                variant="outlined"
+                                margin="normal"
+                                required
+                                fullWidth
+                                name="password"
+                                label="Password"
+                                type="password"
+                                id="password"
+                                autoComplete="current-password"
+                                onChange={this.handleChange}
+                            /><br/>
+                            {this.state.loginformErrorMessage.password ?
+							(<span className="text-danger">
+							{this.state.loginformErrorMessage.password} 
+							</span>): null}
+                            <p style={{textAlign:"left"}}>*
+							marked feilds are mandatory </p>
+                            {this.state.errorMessage ? (<span className="text-danger">
+							{this.state.errorMessage} </span>): null}
+                            <br/>
+                            <Button
+                                type="submit"
+                                variant="contained"
+                                color="primary"
+                                disabled={!this.state.loginformValid.buttonActive}
+                            >
+                                Login
+                            </Button>
+                            <br/>
+                            <br/>
 
-                        <div className="text-center">
-                            <ProgressSpinner></ProgressSpinner>
-                        </div>
-                    </div> : null
-            } */}
-            <div className="loginSection"> 
-                <section id="" >    {/* *ngIf="!registerPage"  */}
-                    <div className="container-fluid">
-                        <div className="row">
-                            <div className="col-md-4 offset-4 ">
-                                
-                                <form className="form bg-light shadow-lg p-4 mb-4 bg-white rounded-lg" onSubmit={this.handleSubmit}> {/* [formGroup]="loginForm" (ngSubmit)="login()" */}
-                                <h1>Login</h1>
-                                    <div className="form-group  ml-2 mr-2">
-                                        <label htmlFor="uContactNo">Contact Number<span className="text-danger">*</span></label>
-                                        <input
-                                            type="number"
-                                            value={this.state.loginform.contactNo}
-                                            onChange={this.handleChange}
-                                            id="uContactNo"
-                                            name="contactNo"
-                                            className="form-control"
-                                        />
-                                    </div>
-                                    {this.state.loginformErrorMessage.contactNo ? (<span className="text-danger">
-                                        {this.state.loginformErrorMessage.contactNo}
-                                    </span>)
-                                        : null}
-
-                                    <div className="form-group  ml-2 mr-2">
-                                        <label htmlFor="uPass">Password<span className="text-danger">*</span></label>
-                                        <input
-                                            type="password"
-                                            value={this.state.loginform.password}
-                                            onChange={this.handleChange}
-                                            id="uPass"
-                                            name="password"
-                                            className="form-control"
-                                        />
-                                    </div>
-                                    {this.state.loginformErrorMessage.password ? (<span className="text-danger">
-                                        {this.state.loginformErrorMessage.password}
-                                    </span>)
-                                        : null}
-                                    <br/><span><span className="text-danger">*</span> marked fields are mandatory</span>
-                                    <br />
-                                    <div className="form-group  ml-2 mr-2">
-                                        <div className="text-danger">
-                                            <h6>{this.state.errorMessage }</h6>
-                                        </div>
-                                    </div>
-
-                                    <button
-                                        type="submit"
-                                        disabled={!this.state.loginformValid.buttonActive}
-                                        className="btn btn-primary btn-block"
-                                    >
-                                        Login
-                                    </button>
-                                
-                                <br />
-                                <br/>
-                                {/* <!--can be a button or a link based on need --> */}
-                                <button className="btn btn-primary btn-block" onClick={this.handleClick} >Click here to Register</button>
-                               <br/>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-                {/* <div * ngIf= "!registerPage" >
-            <router-outlet></router-outlet>
-            </div > */}
-                {/* *ngIf="!registerPage" */}
-                {/* </div > */}
-            </div>
-            </div>
-
-        )
+                            <Button
+                                fullWidth
+                                variant="contained"
+                                color="primary"
+                                onClick={this.handleClick} 
+                            >
+                                Click here to Register
+                            </Button>
+                            <br/>
+                            <br/>
+                        </form>
+          </div>
+          </div>
+          </div>
+      </Container>
+              )
     }
-}
+    else{
+        return <h2 style={{color:"green"}}>You are successfully logged in!</h2>
+     }}
 }
 
 export default Login;
